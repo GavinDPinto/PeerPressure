@@ -2,7 +2,7 @@
 
 **"Gamified self-improvement powered by AI... and anxiety."**
 
-**[Click Here to Visit App...before our credits run out :(](https://peer-pressure-67.app)**
+**[Click Here to Visit App...before our credits run out :(](https://peer-pressure-67.vercel.app)**
 
 PeerPressure turns your New Year's resolutions and daily habits into a competitive sport. We leverage social pressure to keep you consistent—because nothing motivates quite like the fear of falling behind your friends on the leaderboard.
 
