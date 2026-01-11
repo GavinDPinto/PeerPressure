@@ -262,40 +262,72 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
     # Get user stats
     stats = await stats_collection.find_one({"_id": user_id})
     if not stats:
-        stats = {"_id": user_id, "total_points": 0, "streak": 0, "tasks_completed": 0, "about": ""}
+        stats = {"_id": user_id, "total_points": 0, "tasks_completed": 0, "streak": 0, "last_streak_date": None, "about": ""}
         await stats_collection.insert_one(stats)
     
     # Calculate level dynamically based on points
     total_points = stats.get("total_points", 0)
     calculated_level = calculate_level(total_points)
     
-    # Ensure streak exists (set default if missing)
-    if "streak" not in stats:
-        stats["streak"] = 0
     if "tasks_completed" not in stats:
         stats["tasks_completed"] = 0
+    if "streak" not in stats:
+        stats["streak"] = 0
+    if "last_streak_date" not in stats:
+        stats["last_streak_date"] = None
     if "about" not in stats:
         stats["about"] = ""
     
-    # Count completed tasks for this user
-    tasks_completed = await resolutions_collection.count_documents({
+    # Count completed one-time tasks AND daily tasks completed today
+    one_time_completed = await resolutions_collection.count_documents({
         "user_id": user_id,
+        "type": "onetime",
         "status": "completed"
     })
     
-    # Update tasks_completed in stats if different
-    if tasks_completed != stats.get("tasks_completed", 0):
-        await stats_collection.update_one(
-            {"_id": user_id},
-            {"$set": {"tasks_completed": tasks_completed, "streak": stats["streak"]}}
-        )
+    today_str = date.today().isoformat()
+    daily_completed_today = await resolutions_collection.count_documents({
+        "user_id": user_id,
+        "type": "daily",
+        "last_completed_at": {"$regex": f"^{today_str}"}
+    })
+    
+    tasks_completed = one_time_completed + daily_completed_today
+    
+    # Count total daily tasks for today
+    total_daily_tasks = await resolutions_collection.count_documents({
+        "user_id": user_id,
+        "type": "daily"
+    })
+    
+    # Calculate streak
+    current_streak = stats.get("streak", 0)
+    last_streak_date = stats.get("last_streak_date")
+    
+    # If there are daily tasks and all are completed today
+    if total_daily_tasks > 0 and daily_completed_today == total_daily_tasks:
+        # If today is different from last streak date, increment streak
+        if last_streak_date != today_str:
+            current_streak += 1
+            last_streak_date = today_str
+    else:
+        # If not all tasks completed today and we're on a new day, reset streak
+        if last_streak_date and last_streak_date != today_str:
+            current_streak = 0
+            last_streak_date = None
+    
+    # Update stats
+    await stats_collection.update_one(
+        {"_id": user_id},
+        {"$set": {"tasks_completed": tasks_completed, "streak": current_streak, "last_streak_date": last_streak_date}}
+    )
     
     return {
         "username": current_user["username"],
         "email": current_user["email"],
         "total_points": total_points,
         "tasks_completed": tasks_completed,
-        "streak": stats.get("streak", 0),
+        "streak": current_streak,
         "level": calculated_level,
         "about": stats.get("about", "")
     }

@@ -65,21 +65,26 @@ export default function App() {
 
 function TabBar({ activeTab, setActiveTab }) {
   return (
-    <div className="h-16 bg-pink-900 border-t border-gray-800 flex justify-around items-center">
-      <Tab label="Home" active={activeTab === "home"} onClick={() => setActiveTab("home")} />
-      <Tab label="Leaderboard" active={activeTab === "leaderboard"} onClick={() => setActiveTab("leaderboard")} />
-      <Tab label="Account" active={activeTab === "account"} onClick={() => setActiveTab("account")} />
+    <div className="h-20 bg-gray-900 border-t border-gray-800 flex justify-around items-center gap-2 px-4">
+      <Tab label="Home" icon="🏠" active={activeTab === "home"} onClick={() => setActiveTab("home")} />
+      <Tab label="Leaderboard" icon="🏆" active={activeTab === "leaderboard"} onClick={() => setActiveTab("leaderboard")} />
+      <Tab label="Account" icon="👤" active={activeTab === "account"} onClick={() => setActiveTab("account")} />
     </div>
   );
 }
 
-function Tab({ label, active, onClick }) {
+function Tab({ label, icon, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center text-sm ${active ? "text-blue-500" : "text-gray-400"}`}
+      className={`flex flex-col items-center justify-center py-2 px-4 rounded-lg transition-all duration-200 ${
+        active 
+          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg" 
+          : "text-gray-400 hover:text-white hover:bg-gray-800"
+      }`}
     >
-      {label}
+      <span className="text-2xl mb-1">{icon}</span>
+      <span className="text-xs font-semibold">{label}</span>
     </button>
   );
 }
