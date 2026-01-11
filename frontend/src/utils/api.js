@@ -1,4 +1,6 @@
-const API_BASE = "http://localhost:8000";
+import { API_BASE_URL } from "../config.js";
+
+const API_BASE = API_BASE_URL;
 
 // Get JWT token from localStorage
 const getAuthHeader = () => {
