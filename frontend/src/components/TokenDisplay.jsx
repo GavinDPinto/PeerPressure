@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 export default function TokenDisplay({tokens=0}) {
+=======
+export default function TokenDisplay({ tokens = 0 }) {
+>>>>>>> f05507535883e87f6fdd2647bcb43c2081d500d7
     const radius = 50
     const circumference = Math.PI * radius
     const offset = circumference * (1 - tokens / 100)

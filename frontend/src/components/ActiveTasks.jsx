@@ -1,25 +1,39 @@
 import { useState, useEffect } from 'react';
 import Task from './Task';
 
-export default function ActiveTasks() {
+export default function ActiveTasks({ onTaskComplete }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch('/api/resolutions');
-        const data = await response.json();
-        setTasks(data);
-      } catch (error) {
-        console.error('Failed to fetch tasks:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTasks();
   }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch('/api/resolutions');
+      const data = await response.json();
+      setTasks(data);
+    } catch (error) {
+      console.error('Failed to fetch tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTaskComplete = async (taskId) => {
+    try {
+      const response = await fetch(`/api/resolutions/${taskId}/complete`, {
+        method: 'PUT',
+      });
+      if (response.ok) {
+        fetchTasks(); // Refresh tasks
+        if (onTaskComplete) onTaskComplete(); // Refetch tokens in parent
+      }
+    } catch (error) {
+      console.error('Failed to complete task:', error);
+    }
+  };
 
   return (
     <div>
@@ -33,12 +47,14 @@ export default function ActiveTasks() {
           {tasks.map((task) => (
             <Task
               key={task.id}
+              id={task.id}
               title={task.title}
               pointValue={task.points}
               description={task.description}
               schedule={task.type}
               status={task.status}
               completedToday={task.completed_today}
+              onComplete={handleTaskComplete}
             />
           ))}
         </div>

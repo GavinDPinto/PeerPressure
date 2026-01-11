@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ActiveTasks from "../components/ActiveTasks.jsx";
 import TokenDisplay from "../components/TokenDisplay.jsx";
 
 export default function HomeScreen() {
+  const [tokens, setTokens] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -13,6 +14,21 @@ export default function HomeScreen() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Fetch tokens on mount
+  useEffect(() => {
+    fetchTokens();
+  }, []);
+
+  const fetchTokens = async () => {
+    try {
+      const response = await fetch('/api/score');
+      const data = await response.json();
+      setTokens(data.total_points);
+    } catch (error) {
+      console.error('Failed to fetch tokens:', error);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,11 +83,13 @@ export default function HomeScreen() {
   };
 
   return (
-    <div className="flex flex-row gap-10">
-        <TokenDisplay/>
-      <div className="flex flex-col gap-10">
-        <ActiveTasks/>
-        <div className="mt-6">
+    <div className="flex flex-col gap-10">
+      <div className="flex flex-row gap-10">
+        <TokenDisplay tokens={tokens}/>
+        <ActiveTasks onTaskComplete={fetchTokens}/>
+      </div>
+
+      <div className="mt-6">
         <button
           onClick={() => setShowForm(!showForm)}
           className="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded"
