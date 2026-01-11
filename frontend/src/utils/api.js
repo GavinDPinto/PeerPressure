@@ -41,6 +41,13 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
+    
+    // If unauthorized, clear storage
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
+    
     return response;
   },
 
@@ -50,6 +57,13 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),
     });
+    
+    // If unauthorized, clear storage
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
+    
     return response;
   },
 
