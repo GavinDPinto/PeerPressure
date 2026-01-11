@@ -97,6 +97,12 @@ export default function ChatPanel({ onTasksAdded }) {
     handleSend(lastPrompt);
   };
 
+  const handleClearChat = () => {
+    setMessages([]);
+    setSuggestedTasks({});
+    setSelectedTasks({});
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); 
   }, [messages]);
@@ -136,6 +142,14 @@ export default function ChatPanel({ onTasksAdded }) {
             <div className="px-4 py-2 rounded-xl max-w-[75%] bg-gray-700 text-white self-start">
               Generating tasks...
             </div>
+          )}
+          {messages.length > 0 && (
+            <button
+              onClick={handleClearChat}
+              className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition font-semibold self-center"
+            >
+              Clear Chat
+            </button>
           )}
           <div ref={messagesEndRef} />
         </div>
