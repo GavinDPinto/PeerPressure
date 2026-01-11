@@ -19,7 +19,7 @@ export default function Task({ id, title, pointValue, description, schedule, sta
     return (
         <div
       onClick={() => setActive(!active)}
-      className={`flex flex-row gap-10 bg-gray-800 hover p-4  rounded-lg border-3 border-gray-800 ${active ? 'w-full h-80 cursor-pointer' : 'w-full h-30 cursor-pointer'} transition-all duration-300`}
+      className={`flex flex-row gap-20 bg-gray-800 hover p-4  rounded-lg border-3 border-gray-800 ${active ? 'w-full cursor-pointer' : 'w-full h-30 cursor-pointer'} transition-all duration-300`}
     >       
             <div className='flex flex-col pb-6'>
             <h2 className="p-5 text-2xl font-semibold text-white">{title}</h2>
@@ -33,7 +33,7 @@ export default function Task({ id, title, pointValue, description, schedule, sta
             )}
             </div>
 
-            {active && <div className="flex gap-2 mt-30">
+            {active && <div className="flex flex-col gap-2 mt-30">
                 {completedToday ? (
                     <p className="text-green-500">✓ Completed Today</p>
                 ) : (
