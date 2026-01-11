@@ -3,6 +3,7 @@ import ActiveTasks from "../components/ActiveTasks.jsx";
 import TokenDisplay from "../components/TokenDisplay.jsx";
 import Chat from '../pages/Chat.jsx';
 import ChatPanel from '../pages/ChatPanel.jsx';
+import { api } from '../utils/api.js';
 
 export default function HomeScreen() {
   const [tokens, setTokens] = useState(0);
@@ -24,8 +25,7 @@ export default function HomeScreen() {
 
   const fetchTokens = async () => {
     try {
-      const response = await fetch('/api/score');
-      const data = await response.json();
+      const data = await api.getScore();
       setTokens(data.total_points);
     } catch (error) {
       console.error('Failed to fetch tokens:', error);
@@ -54,27 +54,17 @@ export default function HomeScreen() {
         target_date: formData.target_date || undefined,
       };
 
-      const response = await fetch('/api/resolutions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const result = await api.addResolution(payload);
+      setMessage('✓ Task created successfully!');
+      setFormData({
+        title: '',
+        description: '',
+        points: 10,
+        type: 'daily',
+        target_date: '',
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        setMessage('✓ Task created successfully!');
-        setFormData({
-          title: '',
-          description: '',
-          points: 10,
-          type: 'daily',
-          target_date: '',
-        });
-        setShowForm(false);
-        window.location.reload();
-      } else {
-        setMessage('✗ Failed to create task');
-      }
+      setShowForm(false);
+      window.location.reload();
     } catch (error) {
       console.error('Error:', error);
       setMessage('✗ Error creating task');

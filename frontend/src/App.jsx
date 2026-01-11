@@ -6,7 +6,10 @@ import SignUp from "./pages/SignUp.jsx";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("home");
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(() => {
+    // Check if user is already logged in from localStorage
+    return !!localStorage.getItem("user");
+  });
   const [authScreen, setAuthScreen] = useState("login"); // "login" | "signup" | null
 
   return (
@@ -41,6 +44,8 @@ export default function App() {
         {loggedIn && activeTab === "account" && (
           <Account
             onLogout={() => {
+              localStorage.removeItem("token"); // Clear JWT token
+              localStorage.removeItem("user"); // Clear stored user data
               setLoggedIn(false);
               setAuthScreen("login"); // go back to login on logout
             }}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import LogIn from "./LogIn.jsx";
+import { api } from "../utils/api.js";
 
 export default function SignUp({ onSignUp, onBack }) {
   const [logIn, setLogIn] = useState(false);
@@ -10,19 +11,31 @@ export default function SignUp({ onSignUp, onBack }) {
 
   if (logIn) return <LogIn onLogin={onSignUp} />;
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (!username || !email || !password) {
       setWarning("⚠️ Please fill in all fields before signing up!");
       return;
     }
 
-    setWarning(
-      "✅ You must verify your account by logging in again. You will be redirected in 4 seconds."
-    );
-
-    setTimeout(() => {
-      setLogIn(true);
-    }, 4000);
+    try {
+      const response = await api.signup(username, email, password);
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Store JWT token and user data in localStorage
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify({ username: data.username, email: data.email }));
+        setWarning("✅ Account created successfully! Logging you in...");
+        setTimeout(() => {
+          if (onSignUp) onSignUp();
+        }, 1500);
+      } else {
+        setWarning(`⚠️ ${data.detail || "Signup failed"}`);
+      }
+    } catch (error) {
+      setWarning("⚠️ Cannot connect to server. Make sure backend is running.");
+      console.error("Signup error:", error);
+    }
   };
 
   return (

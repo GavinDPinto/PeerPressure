@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Task from './Task';
+import { api } from '../utils/api.js';
 
 export default function ActiveTasks({ onTaskComplete }) {
   const [tasks, setTasks] = useState([]);
@@ -11,8 +12,7 @@ export default function ActiveTasks({ onTaskComplete }) {
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch('/api/resolutions');
-      const data = await response.json();
+      const data = await api.getResolutions();
       setTasks(data);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -23,13 +23,9 @@ export default function ActiveTasks({ onTaskComplete }) {
 
   const handleTaskComplete = async (taskId) => {
     try {
-      const response = await fetch(`/api/resolutions/${taskId}/complete`, {
-        method: 'PUT',
-      });
-      if (response.ok) {
-        fetchTasks(); // Refresh tasks
-        if (onTaskComplete) onTaskComplete(); // Refetch tokens in parent
-      }
+      await api.completeResolution(taskId);
+      fetchTasks(); // Refresh tasks
+      if (onTaskComplete) onTaskComplete(); // Refetch tokens in parent
     } catch (error) {
       console.error('Failed to complete task:', error);
     }

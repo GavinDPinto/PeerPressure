@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SignUp from "./SignUp.jsx";
+import { api } from "../utils/api.js";
 
 export default function LogIn({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -11,14 +12,29 @@ export default function LogIn({ onLogin }) {
     return <SignUp onSignUp={onLogin} onBack={() => setShowSignUp(false)} />;
   }
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username || !password) {
       setWarning("⚠️ Please enter both username and password!");
       return;
     }
     setWarning("");
-    // You can add actual auth logic here
-    if (true) onLogin();
+    
+    try {
+      const response = await api.login(username, password);
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Store JWT token and user data in localStorage
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify({ username: data.username, email: data.email }));
+        onLogin();
+      } else {
+        setWarning(`⚠️ ${data.detail || "Login failed"}`);
+      }
+    } catch (error) {
+      setWarning("⚠️ Cannot connect to server. Make sure backend is running.");
+      console.error("Login error:", error);
+    }
   };
 
   return (
