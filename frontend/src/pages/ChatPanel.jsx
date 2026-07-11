@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from "react";
+import { motion as Motion } from "framer-motion";
 import Chat from "./Chat.jsx";
 import ChatMessage from "../components/ChatMessage.jsx";
+import Card from "../components/ui/Card.jsx";
+import Button from "../components/ui/Button.jsx";
+import Spinner from "../components/ui/Spinner.jsx";
 import { api } from "../utils/api.js";
 
 export default function ChatPanel({ onTasksAdded }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [suggestedTasks, setSuggestedTasks] = useState({});
-  const [selectedTasks, setSelectedTasks] = useState({});
   const messagesEndRef = useRef(null);
 
   const handleSend = async (msg) => {
@@ -16,30 +18,18 @@ export default function ChatPanel({ onTasksAdded }) {
 
     try {
       const result = await api.generateTasks(msg);
-      
+
       if (result.success) {
         const messageId = Date.now();
-        // Show AI response
+        // The backend saves generated tasks immediately, so these are
+        // already part of the user's active list.
         setMessages((prev) => [
           ...prev,
           { text: result.message, sender: "bot", tasks: result.tasks, messageId },
         ]);
-        // Track suggested tasks for this message
-        setSuggestedTasks((prev) => ({
-          ...prev,
-          [messageId]: result.tasks,
-        }));
-        // Initialize all as selected
-        const taskSelection = {};
-        result.tasks.forEach((task, idx) => {
-          taskSelection[`${messageId}-${idx}`] = true;
-        });
-        setSelectedTasks((prev) => ({ ...prev, ...taskSelection }));
+        onTasksAdded?.();
       } else {
-        setMessages((prev) => [
-          ...prev,
-          { text: "Failed to generate tasks", sender: "bot" },
-        ]);
+        setMessages((prev) => [...prev, { text: "Failed to generate tasks", sender: "bot" }]);
       }
     } catch (error) {
       console.error("Error generating tasks:", error);
@@ -52,108 +42,68 @@ export default function ChatPanel({ onTasksAdded }) {
     }
   };
 
-  const handleDeleteTask = (messageId, taskIdx) => {
-    setSuggestedTasks((prev) => ({
-      ...prev,
-      [messageId]: prev[messageId].filter((_, idx) => idx !== taskIdx),
-    }));
-    setSelectedTasks((prev) => {
-      const newSelected = { ...prev };
-      delete newSelected[`${messageId}-${taskIdx}`];
-      return newSelected;
-    });
+  const handleDeleteTask = async (messageId, taskId) => {
+    try {
+      await api.deleteResolution(taskId);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.messageId === messageId
+            ? { ...m, tasks: m.tasks.filter((t) => t.id !== taskId) }
+            : m
+        )
+      );
+      onTasksAdded?.();
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
   };
 
-  const handleToggleTaskSelection = (taskKey) => {
-    setSelectedTasks((prev) => ({
-      ...prev,
-      [taskKey]: !prev[taskKey],
-    }));
-  };
-
-  const handleAddSelectedTasks = (messageId) => {
-    const selected = Object.entries(selectedTasks)
-      .filter(([key, isSelected]) => key.startsWith(`${messageId}-`) && isSelected)
-      .map(([key]) => {
-        const taskIdx = parseInt(key.split("-")[1]);
-        return suggestedTasks[messageId][taskIdx];
-      });
-    
-    if (selected.length === 0) return;
-    
-    // Show confirmation message
-    setMessages((prev) => [
-      ...prev,
-      { text: `Added ${selected.length} task(s) to your list!`, sender: "bot", isConfirmation: true },
-    ]);
-    
-    // Trigger parent to refresh active tasks
-    if (onTasksAdded) onTasksAdded();
-  };
-
-  const handleGenerateMore = async (lastPrompt) => {
-    if (!lastPrompt) return;
-    // Trigger a new generation with the same prompt
-    handleSend(lastPrompt);
-  };
-
-  const handleClearChat = () => {
-    setMessages([]);
-    setSuggestedTasks({});
-    setSelectedTasks({});
-  };
+  const handleClearChat = () => setMessages([]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); 
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-  
-  useEffect(() => {
-    setMessages([]);
-  }, []);
 
   return (
-    <div className="w-full h-full flex flex-col justify-center -mt-1 mb-20">
-        <div className="p-4 border-gray-800">
-            <Chat onSend={handleSend} />
-        </div>
-      <div className="flex-1 overflow-y-auto flex-col w-full h-[75vh] bg-gray-900 rounded-2xl shadow-lg">
-        
-        <div className="flex-1 overflow-y-auto flex flex-col gap-3 p-4 mt-10">
-          {messages.map((m, msgIdx) => {
-            const messageId = m.messageId || msgIdx;
-            const taskList = suggestedTasks[messageId] || m.tasks || [];
-            
-            return (
+    <div className="flex w-full flex-col gap-4">
+      <Card className="p-5">
+        <Chat onSend={handleSend} disabled={loading} />
+      </Card>
+
+      {(messages.length > 0 || loading) && (
+        <Card className="flex max-h-128 flex-col overflow-y-auto p-4">
+          <div className="flex flex-1 flex-col gap-3">
+            {messages.map((m, idx) => (
               <ChatMessage
-                key={msgIdx}
+                key={idx}
                 message={m}
-                messageIdx={msgIdx}
-                taskList={taskList}
-                selectedTasks={selectedTasks}
-                loading={loading}
-                onToggleSelect={handleToggleTaskSelection}
-                onDeleteTask={handleDeleteTask}
-                onAddSelectedTasks={handleAddSelectedTasks}
-                onGenerateMore={() => handleGenerateMore()}
+                taskList={m.tasks}
+                onDeleteTask={(taskId) => handleDeleteTask(m.messageId, taskId)}
               />
-            );
-          })}
-          {loading && (
-            <div className="px-4 py-2 rounded-xl max-w-[75%] bg-gray-700 text-white self-start">
-              Generating tasks...
-            </div>
-          )}
+            ))}
+            {loading && (
+              <Motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2 self-start rounded-2xl bg-surface-2 px-4 py-2.5 text-sm text-muted"
+              >
+                <Spinner size={15} /> Generating tasks...
+              </Motion.div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
           {messages.length > 0 && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleClearChat}
-              className="mt-4 cursor-pointer px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition font-semibold self-center"
+              className="mt-3 self-center"
             >
-              Clear Chat
-            </button>
+              Clear chat
+            </Button>
           )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
+        </Card>
+      )}
     </div>
   );
 }

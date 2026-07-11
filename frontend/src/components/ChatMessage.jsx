@@ -1,42 +1,32 @@
+import { motion as Motion } from "framer-motion";
+import { CheckCircle2 } from "lucide-react";
 import TaskSuggestions from "./TaskSuggestions.jsx";
+import { cn } from "../lib/utils.js";
 
-export default function ChatMessage({
-  message,
-  messageIdx,
-  taskList,
-  selectedTasks,
-  loading,
-  onToggleSelect,
-  onDeleteTask,
-  onAddSelectedTasks,
-  onGenerateMore,
-}) {
-  const messageId = message.messageId || messageIdx;
+export default function ChatMessage({ message, taskList, onDeleteTask }) {
+  const isUser = message.sender === "user";
 
   return (
-    <div>
+    <Motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn("flex flex-col", isUser && "items-end")}
+    >
       <div
-        className={`px-4 py-2 rounded-xl max-w-[75%] ${
-          message.sender === "user"
-            ? "bg-blue-500 text-white self-end ml-auto"
-            : "bg-gray-700 text-white self-start"
-        }`}
+        className={cn(
+          "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
+          isUser ? "grad-brand text-brand-fg" : "bg-surface-2 text-fg"
+        )}
       >
         {message.text}
       </div>
       {message.isConfirmation && (
-        <div className="mt-2 text-sm text-green-400">✓ {message.text}</div>
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-success">
+          <CheckCircle2 size={13} />
+          {message.text}
+        </div>
       )}
-      <TaskSuggestions
-        tasks={taskList}
-        messageId={messageId}
-        selectedTasks={selectedTasks}
-        loading={loading}
-        onToggleSelect={onToggleSelect}
-        onDelete={onDeleteTask}
-        onAddSelected={onAddSelectedTasks}
-        onGenerateMore={onGenerateMore}
-      />
-    </div>
+      {taskList?.length > 0 && <TaskSuggestions tasks={taskList} onDelete={onDeleteTask} />}
+    </Motion.div>
   );
 }

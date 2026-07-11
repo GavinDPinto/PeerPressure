@@ -1,18 +1,196 @@
 @import "tailwindcss";
 
+/* ============================================================
+   PeerPressure design tokens
+   Semantic CSS variables drive light/dark. Tailwind utilities
+   (bg-bg, text-fg, border-line, bg-brand, ...) reference these
+   via @theme, so switching .dark on <html> re-themes everything.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  --c-bg: #f5f6fb;
+  --c-surface: #ffffff;
+  --c-surface-2: #eef1f8;
+  --c-line: #e3e7f0;
+  --c-fg: #0f1729;
+  --c-muted: #64708a;
+
+  --c-brand: #6366f1;
+  --c-brand-2: #8b5cf6;
+  --c-brand-fg: #ffffff;
+  --c-brand-soft: #eef0ff;
+  --c-on-brand-soft: #4f46e5;
+
+  --c-success: #16a34a;
+  --c-success-soft: #dcfce7;
+  --c-warn: #d97706;
+  --c-warn-soft: #fef3c7;
+  --c-danger: #dc2626;
+  --c-danger-soft: #fee2e2;
+
+  --c-gold: #f59e0b;
+  --c-silver: #94a3b8;
+  --c-bronze: #b45309;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.06);
+  --shadow-md: 0 6px 20px -6px rgba(15, 23, 41, 0.14);
+  --shadow-brand: 0 10px 30px -8px rgba(99, 102, 241, 0.45);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --c-bg: #0a0c12;
+  --c-surface: #12151f;
+  --c-surface-2: #1a1f2c;
+  --c-line: #262d3d;
+  --c-fg: #f1f4fb;
+  --c-muted: #98a2b8;
+
+  --c-brand: #7c7ff5;
+  --c-brand-2: #a78bfa;
+  --c-brand-fg: #ffffff;
+  --c-brand-soft: #1e2140;
+  --c-on-brand-soft: #c7c9ff;
+
+  --c-success: #34d399;
+  --c-success-soft: #0f2e24;
+  --c-warn: #fbbf24;
+  --c-warn-soft: #33270a;
+  --c-danger: #f87171;
+  --c-danger-soft: #351317;
+
+  --c-gold: #fbbf24;
+  --c-silver: #cbd5e1;
+  --c-bronze: #d97706;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  --shadow-brand: 0 10px 30px -6px rgba(124, 127, 245, 0.5);
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-line: var(--c-line);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+
+  --color-brand: var(--c-brand);
+  --color-brand-2: var(--c-brand-2);
+  --color-brand-fg: var(--c-brand-fg);
+  --color-brand-soft: var(--c-brand-soft);
+  --color-on-brand-soft: var(--c-on-brand-soft);
+
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-warn: var(--c-warn);
+  --color-warn-soft: var(--c-warn-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+
+  --color-gold: var(--c-gold);
+  --color-silver: var(--c-silver);
+  --color-bronze: var(--c-bronze);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---------- base ---------- */
+* {
+  border-color: var(--c-line);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* nicer, quieter scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--c-line);
+  border-radius: 999px;
+}
+
+/* ---------- helpers ---------- */
+.grad-brand {
+  background-image: linear-gradient(135deg, var(--c-brand), var(--c-brand-2));
+}
+.grad-text {
+  background-image: linear-gradient(135deg, var(--c-brand), var(--c-brand-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ring-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-brand) 45%, transparent);
+}
+
+/* ---------- animations ---------- */
 @keyframes swipeUp {
-  0% {
+  0%,
+  60% {
     transform: translateY(0);
-  }
-  70% {
-    transform: translateY(0);
+    opacity: 1;
   }
   100% {
     transform: translateY(-100%);
+    opacity: 0;
   }
 }
-
 .animate-swipeUp {
   animation: swipeUp 1.8s ease-in-out forwards;
 }
 
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-floatIn {
+  animation: floatIn 0.35s ease-out both;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

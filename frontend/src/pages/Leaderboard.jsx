@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
+import { motion as Motion } from "framer-motion";
+import { Trophy, Medal } from "lucide-react";
 import { api } from "../utils/api.js";
+import Card from "../components/ui/Card.jsx";
+import Skeleton from "../components/ui/Skeleton.jsx";
+import { cn } from "../lib/utils.js";
+
+const RANK_STYLE = [
+  { tone: "text-gold", bg: "bg-gold/10" },
+  { tone: "text-silver", bg: "bg-silver/10" },
+  { tone: "text-bronze", bg: "bg-bronze/10" },
+];
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -8,7 +19,6 @@ export default function Leaderboard() {
 
   useEffect(() => {
     fetchLeaderboard();
-    // Get current user from localStorage
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     setCurrentUser(user.username);
   }, []);
@@ -24,65 +34,65 @@ export default function Leaderboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="h-full flex justify-center items-center">
-        <p className="text-white text-xl">Loading leaderboard...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-full overflow-y-auto flex justify-center px-4 py-10">
-      <div className="w-full max-w-3xl">
-        <h1 className="text-5xl font-bold text-white mb-8 text-center">🏆 Global Leaderboard</h1>
-        
-        <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
-          {leaderboard.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">No users found</p>
-          ) : (
-            <div className="divide-y divide-gray-800">
-              {leaderboard.map((entry, index) => {
-                const isCurrentUser = entry.username === currentUser;
-                const rankColor = 
-                  index === 0 ? "text-yellow-400" : 
-                  index === 1 ? "text-gray-300" : 
-                  index === 2 ? "text-amber-600" : 
-                  "text-gray-500";
-                
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-center justify-between p-4 hover:bg-gray-800 transition ${
-                      isCurrentUser ? "bg-gray-800 border-l-4 border-blue-500" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <span className={`text-2xl font-bold w-12 text-center ${rankColor}`}>
-                        {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
-                      </span>
-                      
-                      <div className="flex-1">
-                        <p className={`text-lg font-semibold ${isCurrentUser ? "text-blue-400" : "text-white"}`}>
-                          {entry.username}
-                          {isCurrentUser && <span className="ml-2 text-sm text-gray-400">(You)</span>}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-purple-400">Level {entry.level}</p>
-                        <p className="text-sm text-gray-400">{entry.total_points} points</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center gap-2.5">
+        <Trophy size={26} className="text-gold" />
+        <h1 className="text-2xl font-extrabold tracking-tight">Leaderboard</h1>
       </div>
+
+      <Card className="overflow-hidden">
+        {loading ? (
+          <div className="flex flex-col gap-1 p-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : leaderboard.length === 0 ? (
+          <p className="py-10 text-center text-muted">No users found</p>
+        ) : (
+          <div className="divide-y divide-line">
+            {leaderboard.map((entry, index) => {
+              const isCurrentUser = entry.username === currentUser;
+              const rank = RANK_STYLE[index];
+
+              return (
+                <Motion.div
+                  key={entry.username}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className={cn(
+                    "flex items-center gap-4 p-4 transition-colors",
+                    isCurrentUser && "border-l-4 border-brand bg-brand-soft/40"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold",
+                      rank ? cn(rank.bg, rank.tone) : "bg-surface-2 text-muted"
+                    )}
+                  >
+                    {index < 3 ? <Medal size={20} /> : `#${index + 1}`}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className={cn("truncate font-semibold", isCurrentUser && "text-brand")}>
+                      {entry.username}
+                      {isCurrentUser && <span className="ml-2 text-xs font-normal text-muted">(You)</span>}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold grad-text">Lvl {entry.level}</p>
+                    <p className="text-xs text-muted">{entry.total_points} pts</p>
+                  </div>
+                </Motion.div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

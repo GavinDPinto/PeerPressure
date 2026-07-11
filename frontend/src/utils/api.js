@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../config.js";
+import { PREVIEW_MODE, previewApi } from "./previewData.js";
 
 const API_BASE = API_BASE_URL;
 
@@ -20,12 +21,13 @@ export const apiFetch = async (endpoint, options = {}) => {
   };
 
   const response = await fetch(`${API_BASE}${endpoint}`, config);
-  
-  // If unauthorized, clear storage and redirect to login
+
+  // If unauthorized, clear storage so the app's own auth state (not a
+  // hard reload) sends the user back to the login screen.
   if (response.status === 401) {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.reload();
+    window.dispatchEvent(new Event("auth:unauthorized"));
     throw new Error("Unauthorized");
   }
 
@@ -33,7 +35,7 @@ export const apiFetch = async (endpoint, options = {}) => {
 };
 
 // API methods
-export const api = {
+const realApi = {
   // Auth
   login: async (username, password) => {
     const response = await fetch(`${API_BASE}/api/login`, {
@@ -129,3 +131,7 @@ export const api = {
     return response.json();
   },
 };
+
+// PREVIEW_MODE (?preview=1 in the URL) swaps every call below for canned
+// sample data so the UI can be reviewed without a running backend.
+export const api = PREVIEW_MODE ? previewApi : realApi;

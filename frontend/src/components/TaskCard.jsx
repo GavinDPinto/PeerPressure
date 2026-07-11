@@ -1,35 +1,26 @@
-export default function TaskCard({ task, taskIdx, messageId, isSelected, onToggleSelect, onDelete }) {
+import { X } from "lucide-react";
+import Badge from "./ui/Badge.jsx";
+
+export default function TaskCard({ task, onDelete }) {
   return (
-    <div
-      className={`bg-gray-800 border rounded-lg p-3 cursor-pointer text-gray-200 text-sm transition ${
-        isSelected
-          ? "border-blue-500 shadow-lg shadow-blue-500/30"
-          : "border-gray-700 opacity-60"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onToggleSelect(`${messageId}-${taskIdx}`)}
-          className="mt-1 w-4 h-4 cursor-pointer"
-        />
-        <div className="flex-1">
-          <p className="font-semibold text-white">{task.title}</p>
-          <p className="text-gray-400 text-xs mt-1">{task.description}</p>
-          <div className="mt-2 flex gap-2 text-xs">
-            <span className="bg-blue-600 bg-opacity-50 px-2 py-1 rounded">{task.points} pts</span>
-            <span className="bg-purple-600 bg-opacity-50 px-2 py-1 rounded">{task.type}</span>
-          </div>
+    <div className="flex items-start gap-3 rounded-xl border border-line bg-surface p-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">{task.title}</p>
+        {task.description && (
+          <p className="mt-0.5 text-xs text-muted line-clamp-2">{task.description}</p>
+        )}
+        <div className="mt-2 flex gap-1.5">
+          <Badge tone="brand">{task.points} pts</Badge>
+          <Badge tone="neutral">{task.type}</Badge>
         </div>
-        <button
-          onClick={() => onDelete(messageId, taskIdx)}
-          className="text-red-400 hover:text-red-300 text-xl cursor-pointer leading-none"
-          title="Delete this task"
-        >
-          ✕
-        </button>
       </div>
+      <button
+        onClick={() => onDelete(task.id)}
+        title="Remove this task"
+        className="shrink-0 cursor-pointer rounded-lg p-1 text-muted ring-focus hover:bg-danger-soft hover:text-danger transition-colors"
+      >
+        <X size={16} />
+      </button>
     </div>
   );
 }

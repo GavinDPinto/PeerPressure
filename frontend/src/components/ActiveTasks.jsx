@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
-import Task from './Task';
-import { api } from '../utils/api.js';
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion as Motion } from "framer-motion";
+import { ClipboardList } from "lucide-react";
+import Task from "./Task.jsx";
+import Card from "./ui/Card.jsx";
+import Skeleton from "./ui/Skeleton.jsx";
+import Button from "./ui/Button.jsx";
+import { api } from "../utils/api.js";
 
 export default function ActiveTasks({ onTaskComplete, refreshTrigger }) {
   const [tasks, setTasks] = useState([]);
@@ -15,9 +20,9 @@ export default function ActiveTasks({ onTaskComplete, refreshTrigger }) {
     try {
       const data = await api.getResolutions();
       setTasks(data);
-      setShowAll(false); // Reset to collapsed view when tasks refresh
+      setShowAll(false);
     } catch (error) {
-      console.error('Failed to fetch tasks:', error);
+      console.error("Failed to fetch tasks:", error);
     } finally {
       setLoading(false);
     }
@@ -26,73 +31,82 @@ export default function ActiveTasks({ onTaskComplete, refreshTrigger }) {
   const handleTaskComplete = async (taskId) => {
     try {
       await api.completeResolution(taskId);
-      fetchTasks(); // Refresh tasks
-      if (onTaskComplete) onTaskComplete(); // Refetch tokens in parent
+      fetchTasks();
+      onTaskComplete?.();
     } catch (error) {
-      console.error('Failed to complete task:', error);
+      console.error("Failed to complete task:", error);
     }
   };
 
   const handleTaskDelete = async (taskId) => {
     try {
       await api.deleteResolution(taskId);
-      fetchTasks(); // Refresh tasks
+      fetchTasks();
     } catch (error) {
-      console.error('Failed to delete task:', error);
+      console.error("Failed to delete task:", error);
     }
   };
 
-  // Sort tasks: incomplete first, completed at bottom
-  const sortedTasks = [...tasks].sort((a, b) => {
-    const aCompleted = a.completed_today ? 1 : 0;
-    const bCompleted = b.completed_today ? 1 : 0;
-    return aCompleted - bCompleted;
-  });
-
+  const sortedTasks = [...tasks].sort(
+    (a, b) => (a.completed_today ? 1 : 0) - (b.completed_today ? 1 : 0)
+  );
   const displayedTasks = showAll ? sortedTasks : sortedTasks.slice(0, 5);
   const hasMore = sortedTasks.length > 5;
 
   return (
-    <div>
-      <h1 className="font-bold text-left text-6xl text-white">Active Tasks</h1>
+    <Card className="p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold">Active Tasks</h2>
+        {!loading && tasks.length > 0 && (
+          <span className="text-sm text-muted">
+            {tasks.filter((t) => t.completed_today).length}/{tasks.length} done
+          </span>
+        )}
+      </div>
+
       {loading ? (
-        <p className="text-left text-xl text-gray-300 mt-4">Loading...</p>
-      ) : tasks.length === 0 ? (
-        <p className="text-left text-xl text-gray-300 mt-4">One day or DAY ONE 😈😈😈😈</p>
-      ) : (
-        <div className="mt-6 space-y-4">
-          {displayedTasks.map((task) => (
-            <Task
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              pointValue={task.points}
-              description={task.description}
-              schedule={task.type}
-              status={task.status}
-              completedToday={task.completed_today}
-              onComplete={handleTaskComplete}
-              onDelete={handleTaskDelete}
-            />
+        <div className="flex flex-col gap-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-16 w-full" />
           ))}
-          {hasMore && !showAll && (
-            <button
-              onClick={() => setShowAll(true)}
-              className="mt-4 w-full cursor-pointer text-blue-400 hover:text-blue-300 font-semibold py-2 rounded-lg transition"
-            >
-              Show All ({tasks.length} tasks)
-            </button>
-          )}
-          {showAll && (
-            <button
-              onClick={() => setShowAll(false)}
-              className="mt-4 w-full text-blue-400 cursor-pointer hover:text-blue-300 font-semibold py-2 rounded-lg transition"
-            >
-              Show Less
-            </button>
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-10 text-center">
+          <ClipboardList size={32} className="text-muted" />
+          <p className="font-medium text-muted">No tasks yet — one day or day one?</p>
+          <p className="text-sm text-muted">Describe a goal below and let AI build your task list.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          <AnimatePresence initial={false}>
+            {displayedTasks.map((task) => (
+              <Motion.div
+                key={task.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              >
+                <Task
+                  id={task.id}
+                  title={task.title}
+                  pointValue={task.points}
+                  description={task.description}
+                  schedule={task.type}
+                  completedToday={task.completed_today}
+                  onComplete={handleTaskComplete}
+                  onDelete={handleTaskDelete}
+                />
+              </Motion.div>
+            ))}
+          </AnimatePresence>
+
+          {hasMore && (
+            <Button variant="ghost" size="sm" onClick={() => setShowAll((s) => !s)} className="mt-1">
+              {showAll ? "Show less" : `Show all (${tasks.length})`}
+            </Button>
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

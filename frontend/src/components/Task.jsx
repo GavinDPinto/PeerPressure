@@ -1,58 +1,89 @@
-import { useState } from 'react';
-export default function Task({ id, title, pointValue, description, schedule, status, completedToday, onComplete, onDelete }) {
-    const [active, setActive] = useState(false)
-    const handleComplete = (e) => {
-        e.stopPropagation(); // Prevent parent div click
-        if (onComplete) {
-            onComplete(id);
-        }
-    };
+import { useState } from "react";
+import { motion as Motion } from "framer-motion";
+import { Check, ChevronDown, Trash2 } from "lucide-react";
+import Badge from "./ui/Badge.jsx";
+import Button from "./ui/Button.jsx";
+import { cn } from "../lib/utils.js";
 
-    const handleDelete = (e) => {
-        e.stopPropagation(); // Prevent parent div click
-        if (onDelete) {
-            onDelete(id);
-        }
-    };
+export default function Task({
+  id,
+  title,
+  pointValue,
+  description,
+  schedule,
+  completedToday,
+  onComplete,
+  onDelete,
+}) {
+  const [open, setOpen] = useState(false);
 
+  const handleComplete = (e) => {
+    e.stopPropagation();
+    onComplete?.(id);
+  };
 
-    return (
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    onDelete?.(id);
+  };
+
+  return (
+    <Motion.div
+      layout
+      onClick={() => setOpen((o) => !o)}
+      className={cn(
+        "cursor-pointer rounded-xl border bg-surface-2 p-4 transition-colors",
+        completedToday ? "border-success/30" : "border-line hover:border-brand/40"
+      )}
+    >
+      <div className="flex items-center gap-3">
         <div
-      onClick={() => setActive(!active)}
-      className={`flex flex-row gap-20 bg-gray-800 hover p-4  rounded-lg border-3 border-gray-800 ${active ? 'w-full cursor-pointer' : 'w-full h-30 cursor-pointer'} transition-all duration-300`}
-    >       
-            <div className='flex flex-col pb-6'>
-            <h2 className="p-5 text-2xl font-semibold text-white">{title}</h2>
-            {active && (
-                <div className="flex  flex-col text-gray-300 text-left ml-10  mt-6  gap-1 text-xl w-full">
-                    <p><strong>Points:</strong> {pointValue}</p>
-                    <p><strong>Description:</strong> {description}</p>
-                    <p><strong>Schedule:</strong> {schedule}</p>
-                    <p><strong>Status:</strong> {status}</p>
-                </div>
-            )}
-            </div>
-
-            {active && <div className="flex flex-col gap-2 mt-30">
-                {completedToday ? (
-                    <p className="text-green-500">✓ Completed Today</p>
-                ) : (
-                    <button
-                        onClick={handleComplete}
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
-                    >
-                        Complete
-                    </button>
-                )}
-                <button
-                    onClick={handleDelete}
-                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded"
-                >
-                    Delete
-                </button>
-            </div>}
-            
-            
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2",
+            completedToday ? "border-success bg-success text-white" : "border-line text-transparent"
+          )}
+        >
+          <Check size={16} />
         </div>
-    );
+
+        <div className="min-w-0 flex-1">
+          <p className={cn("truncate font-semibold", completedToday && "text-muted line-through")}>
+            {title}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <Badge tone="brand">{pointValue} pts</Badge>
+            <Badge tone="neutral">{schedule}</Badge>
+          </div>
+        </div>
+
+        <ChevronDown
+          size={18}
+          className={cn("shrink-0 text-muted transition-transform", open && "rotate-180")}
+        />
+      </div>
+
+      {open && (
+        <Motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="overflow-hidden"
+        >
+          <div className="ml-11 mt-3 flex flex-col gap-3">
+            {description && <p className="text-sm text-muted leading-relaxed">{description}</p>}
+            <div className="flex gap-2">
+              {!completedToday && (
+                <Button variant="success" size="sm" onClick={handleComplete}>
+                  <Check size={15} /> Complete
+                </Button>
+              )}
+              <Button variant="danger" size="sm" onClick={handleDelete}>
+                <Trash2 size={15} /> Delete
+              </Button>
+            </div>
+          </div>
+        </Motion.div>
+      )}
+    </Motion.div>
+  );
 }
